@@ -1,8 +1,6 @@
-import numpy as np
-import sys
 import pickle as pkl
-import networkx as nx
-import scipy.sparse as sp
+
+import numpy as np
 
 
 def parse_index_file(filename):
@@ -13,29 +11,24 @@ def parse_index_file(filename):
 
 
 def load_data(dataset):
-    # load the data: x, tx, allx, graph
-    names = ['x', 'tx', 'allx', 'graph']
-    objects = []
-    for i in range(len(names)):
-        with open("data/ind.{}.{}".format(dataset, names[i]), 'rb') as f:
-            if sys.version_info > (3, 0):
-                objects.append(pkl.load(f, encoding='latin1'))
-            else:
-                objects.append(pkl.load(f))
-    x, tx, allx, graph = tuple(objects)
-    test_idx_reorder = parse_index_file("data/ind.{}.test.index".format(dataset))
-    test_idx_range = np.sort(test_idx_reorder)
 
-    if dataset == 'citeseer':
-        # Fix citeseer dataset (there are some isolated nodes in the graph)
-        # Find isolated nodes, add them as zero-vecs into the right position
-        test_idx_range_full = range(min(test_idx_reorder), max(test_idx_reorder)+1)
-        tx_extended = sp.lil_matrix((len(test_idx_range_full), x.shape[1]))
-        tx_extended[test_idx_range-min(test_idx_range), :] = tx
-        tx = tx_extended
+    # load feature matrix
+    with open('./data/{}_feats.pkl'.format(dataset), 'rb') as f1:
+        features = pkl.load(f1)
+    # load adjacency matrix
+    # with open('./data/{}_adj.pkl'.format(dataset), 'rb') as f2:
+    #     adj = pkl.load(f2, encoding='latin1')
+    with open('./data/{}_new_adj.pkl'.format(dataset), 'rb') as f2:
+        adj = pkl.load(f2, encoding='latin1')
 
-    features = sp.vstack((allx, tx)).tolil()
-    features[test_idx_reorder, :] = features[test_idx_range, :]
-    adj = nx.adjacency_matrix(nx.from_dict_of_lists(graph))
+    # load validation set and test set
+    val_edges = np.load('./data/{}_val_edges.npy'.format(dataset))
+    val_edges_false = np.load('./data/{}_val_edges_false.npy'.format(dataset))
+    test_edges = np.load('./data/{}_test_edges.npy'.format(dataset))
+    test_edges_false = np.load('./data/{}_test_edges_false.npy'.format(dataset))
+    # labels = np.load('./data/{}_labels.npy'.format(dataset))
+    with open('./data/{}_adj_train.pkl'.format(dataset), 'rb') as handle:
+        adj_train = pkl.load(handle)
 
-    return adj, features
+    # return new_adj, features
+    return adj, features, adj_train, val_edges, val_edges_false, test_edges, test_edges_false  # , labels

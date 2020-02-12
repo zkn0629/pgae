@@ -1,5 +1,5 @@
 .idea/
 *.pyc
 build/
-dist/
+gae/data/dist/
 *.egg-info/
